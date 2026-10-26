@@ -150,9 +150,10 @@ footer{padding:0 16px 24px;color:var(--muted);font-size:12px}
   </div>
       </div>
 
-    <div class="notice">
-      <button id="activarPro" type="button">Activar Plan Pro — S/ 14.90</button>
-    </div>
+    <div class="notice" id="planAccion">
+  <div id="planEstado" style="margin-bottom:12px;"></div>
+  <button id="activarPro" type="button">Activar Plan Pro — S/ 14.90</button>
+</div>
 </section>
 </main>
  
@@ -317,7 +318,51 @@ $('cuentaHastaLabel').textContent=plan==='pro'?'Plan Pro disponible hasta':'Prue
       : (pruebaHasta
           ? `Tu prueba gratuita está disponible hasta el ${new Date(pruebaHasta).toLocaleDateString('es-PE')}.`
           : 'Tu perfil está conectado.');
+// Mostrar correctamente el estado del Plan Pro
+const planEstado = $('planEstado');
+const activarPro = $('activarPro');
+
+if (planEstado && activarPro) {
+  if (plan === 'pro') {
+    const proVigente =
+      proHasta &&
+      new Date(proHasta).getTime() >= Date.now();
+
+    if (proVigente) {
+      planEstado.textContent =
+        '✓ Plan Pro activo hasta el ' +
+        new Date(proHasta).toLocaleDateString('es-PE');
+
+      activarPro.style.display = 'none';
+    } else {
+      planEstado.textContent =
+        'Tu Plan Pro ha vencido. Puedes renovarlo para continuar.';
+
+      activarPro.textContent =
+        'Renovar Plan Pro — S/ 14.90';
+
+      activarPro.style.display = '';
+    }
+  } else {
+    const pruebaActiva =
+      pruebaHasta &&
+      new Date(pruebaHasta).getTime() >= Date.now();
+
+    if (pruebaActiva) {
+      planEstado.textContent =
+        'Estás usando tu prueba gratuita de 15 días.';
+    } else {
+      planEstado.textContent =
+        'Tu prueba gratuita ha finalizado.';
+    }
+
+    activarPro.textContent =
+      'Activar Plan Pro — S/ 14.90';
+
+    activarPro.style.display = '';
+  }
 }
+
 function pruebaVencida(){
   const plan=(profile?.plan||'prueba').toLowerCase();
 

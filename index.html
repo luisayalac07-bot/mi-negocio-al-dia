@@ -286,7 +286,15 @@ function updateProfileUI(){
   const pruebaHasta=profile?.prueba_hasta;
   const proHasta=profile?.pro_hasta;
 
-  $('planBadge').textContent=plan==='pro'?'PLAN PRO':'PRUEBA';
+  const proVigente =
+  plan === 'pro' &&
+  proHasta &&
+  new Date(proHasta).getTime() >= Date.now();
+
+$('planBadge').textContent =
+  proVigente ? 'PLAN PRO' :
+  plan === 'pro' ? 'PRO VENCIDO' :
+  'PRUEBA';
 $('cuentaHastaLabel').textContent=plan==='pro'?'Plan Pro disponible hasta':'Prueba disponible hasta';
   $('cuentaPlan').textContent=plan==='pro'?'Plan Pro':'Prueba gratuita';
 

@@ -65,6 +65,9 @@ footer{padding:0 16px 24px;color:var(--muted);font-size:12px}
   <form id="authForm">
    <div class="field"><label for="authEmail">Correo electrónico</label><input id="authEmail" type="email" autocomplete="email" required placeholder="tunegocio@correo.com"></div>
    <div class="field" style="margin-top:10px"><label for="authPassword">Contraseña</label><input id="authPassword" type="password" minlength="6" autocomplete="current-password" required placeholder="Mínimo 6 caracteres"></div>
+   <div id="forgotWrap" style="margin-top:8px;text-align:right">
+  <button id="forgotPassword" class="linkbtn" type="button">¿Olvidaste tu contraseña?</button>
+</div>
    <div class="actions"><button class="btn" id="authSubmit" type="submit">Ingresar</button></div>
   </form>
   <div class="auth-switch"><span id="switchText">¿Aún no tienes cuenta?</span> <button id="switchAuth" class="linkbtn" type="button">Crear cuenta</button></div>
@@ -230,6 +233,35 @@ function friendlyError(err){
  if(t.includes('password')) return 'La contraseña debe tener al menos 6 caracteres.';
  return 'No se pudo completar la operación: '+(err?.message||err);
 }
+ $('forgotPassword').onclick = async () => {
+  const email = $('authEmail').value.trim();
+
+  if (!email) {
+    msg('authMessage', 'Ingresa primero tu correo electrónico.', 'err');
+    $('authEmail').focus();
+    return;
+  }
+
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://luisayalac07-bot.github.io/mi-negocio-al-dia/'
+    });
+
+    if (error) throw error;
+
+    msg(
+      'authMessage',
+      'Te enviamos un enlace para recuperar tu contraseña. Revisa tu correo electrónico.',
+      'ok'
+    );
+  } catch (err) {
+    msg(
+      'authMessage',
+      'No se pudo enviar el correo de recuperación. Inténtalo nuevamente.',
+      'err'
+    );
+  }
+};
 async function enterApp(){
   showApp();
   msg('appMessage','Conectando con tu cuenta...','ok');
@@ -570,7 +602,43 @@ const response=await fetch(
 (async()=>{
  const {data:{session}}=await sb.auth.getSession();
  if(session?.user){user=session.user;await enterApp()}else showAuth();
- sb.auth.onAuthStateChange(async(event,session)=>{if(event==='SIGNED_IN'&&session?.user&&!user){user=session.user;await enterApp()}if(event==='SIGNED_OUT')showAuth()});
+ sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    const nueva = prompt('Escribe tu nueva contraseña (mínimo 6 caracteres):');
+
+    if (!nueva) return;
+
+    if (nueva.length < 6) {
+      alert('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    const { error } = await sb.auth.updateUser({
+      password: nueva
+    });
+
+    if (error) {
+      alert('No se pudo actualizar la contraseña. Inténtalo nuevamente.');
+      return;
+    }
+
+    alert('Contraseña actualizada correctamente. Ya puedes usar tu nueva contraseña.');
+    await sb.auth.signOut();
+    user = null;
+    profile = null;
+    showAuth();
+    return;
+  }
+
+  if (event === 'SIGNED_IN' && session?.user && !user) {
+    user = session.user;
+    await enterApp();
+  }
+
+  if (event === 'SIGNED_OUT') {
+    showAuth();
+  }
+});
 })();
 </script>
 </body>

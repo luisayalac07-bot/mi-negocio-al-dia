@@ -601,7 +601,8 @@ const response=await fetch(
 };
 (async()=>{
  const {data:{session}}=await sb.auth.getSession();
- if(session?.user){user=session.user;await enterApp()}else showAuth();
+ const esRecuperacion = window.location.hash.includes('type=recovery');
+if(session?.user && !esRecuperacion){user=session.user;await enterApp()}else if(!session?.user){showAuth()}
  sb.auth.onAuthStateChange(async (event, session) => {
   if (event === 'PASSWORD_RECOVERY') {
     const nueva = prompt('Escribe tu nueva contraseña (mínimo 6 caracteres):');

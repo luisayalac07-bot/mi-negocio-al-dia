@@ -262,6 +262,50 @@ function friendlyError(err){
     );
   }
 };
+ // ===== CAMBIO DE CONTRASEÑA DESDE EL ENLACE DE RECUPERACIÓN =====
+sb.auth.onAuthStateChange((event, session) => {
+  if (event !== 'PASSWORD_RECOVERY') return;
+
+  // Lo ejecutamos fuera del callback de Auth para no bloquear Supabase.
+  setTimeout(async () => {
+    const nueva = prompt(
+      'Escribe tu nueva contraseña (mínimo 6 caracteres):'
+    );
+
+    if (!nueva) {
+      alert('No se cambió la contraseña.');
+      return;
+    }
+
+    if (nueva.length < 6) {
+      alert('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    const { error } = await sb.auth.updateUser({
+      password: nueva
+    });
+
+    if (error) {
+      console.error(error);
+      alert('No se pudo cambiar la contraseña. Inténtalo nuevamente.');
+      return;
+    }
+
+    alert(
+      'Contraseña actualizada correctamente. Inicia sesión con tu nueva contraseña.'
+    );
+
+    await sb.auth.signOut();
+
+    user = null;
+    profile = null;
+    state = {products:[], sales:[], expenses:[]};
+
+    history.replaceState(null, '', window.location.pathname);
+    showAuth();
+  }, 0);
+});
 async function enterApp(){
   showApp();
   msg('appMessage','Conectando con tu cuenta...','ok');

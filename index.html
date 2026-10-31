@@ -142,18 +142,27 @@ footer{padding:0 16px 24px;color:var(--muted);font-size:12px}
  </section>
 
  <section class="panel" id="planes">
-  <h2>Tu plan y opciones de acceso</h2>
-  <p class="sub">Consulta el estado de tu plan y las opciones disponibles para continuar usando Mi Negocio al Día.</p>
-  <div class="cards">
-   <div class="metric"><span>PRUEBA GRATUITA</span><strong>15 días</strong><p>Registra productos, ventas y egresos; consulta tus resultados diarios, semanales y mensuales; y prueba el informe PDF.</p></div>
-   <div class="metric highlight"><span>PLAN PRO</span><strong>S/ 14.90/mes</strong><p>Mantén el acceso a tu información, sincronización en la nube e informes para administrar tu negocio desde celular o computadora.</p></div>
-  </div>
-      </div>
+  <h2 id="planesTitulo">Tu plan y opciones de acceso</h2>
+  <p class="sub" id="planesSubtitulo">Consulta el estado de tu plan y las opciones disponibles para continuar usando Mi Negocio al Día.</p>
 
-    <div class="notice" id="planAccion">
-  <div id="planEstado" style="margin-bottom:12px;"></div>
-  <button id="activarPro" type="button">Activar Plan Pro — S/ 14.90</button>
-</div>
+  <div class="cards">
+    <div class="metric" id="tarjetaPrueba">
+      <span>PRUEBA GRATUITA</span>
+      <strong>15 días</strong>
+      <p>Registra productos, ventas y egresos; consulta tus resultados diarios, semanales y mensuales; y prueba el informe PDF.</p>
+    </div>
+
+    <div class="metric highlight" id="tarjetaPro">
+      <span>PLAN PRO</span>
+      <strong>S/ 14.90/mes</strong>
+      <p>Mantén el acceso a tu información, sincronización en la nube e informes para administrar tu negocio desde celular o computadora.</p>
+    </div>
+  </div>
+
+  <div class="notice" id="planAccion">
+    <div id="planEstado" style="margin-bottom:12px;"></div>
+    <button id="activarPro" type="button">Activar Plan Pro — S/ 14.90</button>
+  </div>
 </section>
 </main>
  
@@ -342,6 +351,8 @@ if (planEstado && activarPro) {
         new Date(proHasta).toLocaleDateString('es-PE');
 
       activarPro.style.display = 'none';
+     const tarjetaPrueba = $('tarjetaPrueba');
+if (tarjetaPrueba) tarjetaPrueba.style.display = 'none';
     } else {
       planEstado.textContent =
         'Tu Plan Pro ha vencido. Puedes renovarlo para continuar.';
@@ -352,6 +363,8 @@ if (planEstado && activarPro) {
       activarPro.style.display = '';
     }
   } else {
+   const tarjetaPrueba = $('tarjetaPrueba');
+if (tarjetaPrueba) tarjetaPrueba.style.display = '';
     const pruebaActiva =
       pruebaHasta &&
       new Date(pruebaHasta).getTime() >= Date.now();

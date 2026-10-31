@@ -599,25 +599,27 @@ const response=await fetch(
     alert('No se pudo abrir Mercado Pago. Inténtalo nuevamente.');
   }
 };
-(async()=>{
- const {data:{session}}=await sb.auth.getSession();
- const parametros = window.location.hash + window.location.search;
-const esRecuperacion = parametros.includes('type=recovery');
+const { data: { session } } = await sb.auth.getSession();
 
-if(session?.user && !esRecuperacion){
-  user=session.user;
-  await enterApp();
-}else if(!session?.user){
-  showAuth();
-}
- sb.auth.onAuthStateChange(async (event, session) => {
+let recuperandoPassword = false;
+
+sb.auth.onAuthStateChange(async (event, session) => {
+
   if (event === 'PASSWORD_RECOVERY') {
-    const nueva = prompt('Escribe tu nueva contraseña (mínimo 6 caracteres):');
+    recuperandoPassword = true;
 
-    if (!nueva) return;
+    const nueva = prompt(
+      'Escribe tu nueva contraseña (mínimo 6 caracteres):'
+    );
+
+    if (!nueva) {
+      recuperandoPassword = false;
+      return;
+    }
 
     if (nueva.length < 6) {
       alert('La contraseña debe tener al menos 6 caracteres.');
+      recuperandoPassword = false;
       return;
     }
 
@@ -627,26 +629,49 @@ if(session?.user && !esRecuperacion){
 
     if (error) {
       alert('No se pudo actualizar la contraseña. Inténtalo nuevamente.');
+      recuperandoPassword = false;
       return;
     }
 
-    alert('Contraseña actualizada correctamente. Ya puedes usar tu nueva contraseña.');
+    alert('Contraseña actualizada correctamente. Ya puedes iniciar sesión con tu nueva contraseña.');
+
     await sb.auth.signOut();
     user = null;
     profile = null;
+    recuperandoPassword = false;
+
+    history.replaceState(null, '', window.location.pathname);
     showAuth();
     return;
   }
 
-  if (event === 'SIGNED_IN' && session?.user && !user) {
+  if (event === 'SIGNED_IN' && session?.user && !user && !recuperandoPassword) {
+    const parametros = window.location.hash + window.location.search;
+
+    if (parametros.includes('type=recovery')) {
+      return;
+    }
+
     user = session.user;
     await enterApp();
   }
 
   if (event === 'SIGNED_OUT') {
+    user = null;
+    profile = null;
     showAuth();
   }
 });
+
+const parametrosIniciales = window.location.hash + window.location.search;
+const esRecuperacionInicial = parametrosIniciales.includes('type=recovery');
+
+if (session?.user && !esRecuperacionInicial) {
+  user = session.user;
+  await enterApp();
+} else if (!session?.user) {
+  showAuth();
+}
 })();
 </script>
 </body>

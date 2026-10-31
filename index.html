@@ -599,12 +599,19 @@ const response=await fetch(
     alert('No se pudo abrir Mercado Pago. Inténtalo nuevamente.');
   }
 };
-const { data: { session } } = await sb.auth.getSession();
+// ===== CONTROL DE SESIÓN Y RECUPERACIÓN DE CONTRASEÑA =====
 
-let recuperandoPassword = false;
+// Guardamos la URL original ANTES de que Supabase procese la sesión.
+const urlInicial = window.location.href;
+const esRecuperacionInicial =
+  urlInicial.includes('type=recovery') ||
+  urlInicial.includes('code=');
+
+let recuperandoPassword = esRecuperacionInicial;
 
 sb.auth.onAuthStateChange(async (event, session) => {
 
+  // RECUPERACIÓN DE CONTRASEÑA
   if (event === 'PASSWORD_RECOVERY') {
     recuperandoPassword = true;
 
@@ -612,14 +619,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
       'Escribe tu nueva contraseña (mínimo 6 caracteres):'
     );
 
-    if (!nueva) {
-      recuperandoPassword = false;
-      return;
-    }
+    if (!nueva) return;
 
     if (nueva.length < 6) {
       alert('La contraseña debe tener al menos 6 caracteres.');
-      recuperandoPassword = false;
       return;
     }
 
@@ -629,13 +632,15 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
     if (error) {
       alert('No se pudo actualizar la contraseña. Inténtalo nuevamente.');
-      recuperandoPassword = false;
       return;
     }
 
-    alert('Contraseña actualizada correctamente. Ya puedes iniciar sesión con tu nueva contraseña.');
+    alert(
+      'Contraseña actualizada correctamente. Ya puedes iniciar sesión con tu nueva contraseña.'
+    );
 
     await sb.auth.signOut();
+
     user = null;
     profile = null;
     recuperandoPassword = false;
@@ -645,31 +650,29 @@ sb.auth.onAuthStateChange(async (event, session) => {
     return;
   }
 
-  if (event === 'SIGNED_IN' && session?.user && !user && !recuperandoPassword) {
-    const parametros = window.location.hash + window.location.search;
-
-    if (parametros.includes('type=recovery')) {
-      return;
-    }
-
+  // INICIO DE SESIÓN NORMAL
+  if (event === 'SIGNED_IN' && session?.user && !recuperandoPassword) {
     user = session.user;
     await enterApp();
+    return;
   }
 
+  // CIERRE DE SESIÓN
   if (event === 'SIGNED_OUT') {
     user = null;
     profile = null;
+    recuperandoPassword = false;
     showAuth();
   }
 });
 
-const parametrosIniciales = window.location.hash + window.location.search;
-const esRecuperacionInicial = parametrosIniciales.includes('type=recovery');
+// Comprobar si ya existe una sesión al cargar la página.
+const { data: { session } } = await sb.auth.getSession();
 
-if (session?.user && !esRecuperacionInicial) {
+if (session?.user && !recuperandoPassword) {
   user = session.user;
   await enterApp();
-} else if (!session?.user) {
+} else if (!session?.user && !recuperandoPassword) {
   showAuth();
 }
 })();
